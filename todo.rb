@@ -85,6 +85,16 @@ def error_for_todo(name)
   end
 end
 
+# loads the list to verify if valid list or not
+def load_list(index)
+  list = session[:lists][index] if index && session[:lists][index]
+  return list if list
+
+  session[:error] = "The specified list was not found."
+  redirect "/lists"
+end
+
+
 # create a new list
 post "/lists" do
   list_name = params[:list_name].strip
@@ -103,14 +113,14 @@ end
 # view a single todo list
 get "/lists/:id" do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   erb :list, layout: :layout
 end
 
 # edit an existing to do list
 get "/lists/:id/edit" do
   id = params[:id].to_i
-  @list = session[:lists][id]
+  @list = load_list(id)
   erb :edit_list, layout: :layout
 end
 
@@ -118,7 +128,7 @@ end
 post "/lists/:id" do
   list_name = params[:list_name].strip
   id = params[:id].to_i
-  @list = session[:lists][id]
+  @list = load_list(id)
 
   error = error_for_list_name(list_name)
   if error
@@ -144,7 +154,7 @@ end
 post "/lists/:list_id/todos" do
   todo = params[:todo].strip
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   error = error_for_todo(todo)
   if error
@@ -160,7 +170,7 @@ end
 # delete a todo item
 post "/lists/:list_id/todos/:todo_id/delete" do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   todo_id = params[:todo_id].to_i
 
   @list[:todos].delete_at(todo_id)
@@ -171,7 +181,7 @@ end
 # update status of a todo
 post "/lists/:list_id/todos/:todo_id" do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   todo_id = params[:todo_id].to_i
   is_completed = params[:completed] == "true"
 
@@ -182,7 +192,7 @@ end
 # mark all the todos as complete for a list
 post "/lists/:list_id/complete_all" do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @list[:todos].each do |todo|
     todo[:completed] = true
   end
