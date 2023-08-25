@@ -146,8 +146,12 @@ end
 post "/lists/:id/delete" do
   id = params[:id].to_i
   session[:lists].delete_at(id)
-  session[:success] = "The list has been deleted."
-  redirect "/"
+  if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"  # then we know we are in an AJAX request
+    "/lists"  # returning status code 200 and "/lists"
+  else
+    session[:success] = "The list has been deleted."
+    redirect "/lists"
+  end
 end
 
 # adding a todo
@@ -167,15 +171,19 @@ post "/lists/:list_id/todos" do
   end
 end
 
-# delete a todo item
+# delete a todo item from a list
 post "/lists/:list_id/todos/:todo_id/delete" do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
   todo_id = params[:todo_id].to_i
 
   @list[:todos].delete_at(todo_id)
-  session[:success] = "The todo item has been deleted."
-  redirect "/lists/#{@list_id}"
+  if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"  # then we know we are in an AJAX request
+    status 204   # success status code, but no content
+  else
+    session[:success] = "The todo item has been deleted."
+    redirect "/lists/#{@list_id}"
+  end
 end
 
 # update status of a todo
